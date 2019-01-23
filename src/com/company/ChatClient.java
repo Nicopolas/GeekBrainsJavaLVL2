@@ -14,17 +14,18 @@ import java.awt.*;
 
 public class ChatClient extends JFrame {
     private JToggleButton sendBtn;
-    private JTextField smallField, bigField;
+    private JTextArea bigField;
+    private JTextField smallField;
 
     public ChatClient() throws HeadlessException {
         super("Клиентская часть чата");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        bigField = new JTextField(50);
+        bigField = new JTextArea(15,15);
         bigField.setToolTipText("большое текстовое поле для отображения\n" +
                 "переписки в центре окна");
 
-        smallField = new JTextField(15);
+        smallField = new JTextField(5);
         smallField.setToolTipText("Однострочное текстовое поле для ввода сообщений");
 
         sendBtn =  new JToggleButton("Отправить", false);
