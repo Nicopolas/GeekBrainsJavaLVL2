@@ -1,9 +1,6 @@
 package com.company;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.Socket;
 
 /*1. Написать консольный вариант клиент\серверного приложения,
@@ -33,99 +30,65 @@ public class Client {
 
     public static void main(String[] args) {
         try {
-            try {
-                clientSocket = new Socket("localhost", 4004);
-                reader = new BufferedReader(new InputStreamReader(System.in));
-                out = new BufferedWriter((new OutputStreamWriter(clientSocket.getOutputStream())));
-                clientOnline = true;
-                new Thread(() ->startServerListener()).start();
-                while (clientOnline) {
-                    System.out.println("Напишите то что хотели сказать!");//потом убрать
-                    String word = reader.readLine();
-                    out.write(word + "\n");
-                    out.flush();
-
-                    if (word.equals("out")) {
-                        clientOnline = false;
-                        break;
-                    }
-                }
-            } finally {
-                System.out.println("Клиент закрыт...");
-                clientOnline = false;
-                clientSocket.close();
-                in.close();
-                out.close();
-            }
+            clientSocket = new Socket("localhost", 4004);
+            clientOnline = true;
+            new Thread(() -> startConsoleListener()).start();
+            startServerListener();
         } catch (Exception e) {
-            e.printStackTrace();
+            stopClient();
         }
-
     }
 
-    private static void startServerListener() {
-        try {
-            while (clientOnline) {
-                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    private static void startServerListener() throws IOException {
+        while (clientOnline) {
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-                String serverMsg = in.readLine();
-                System.out.println("Сообщение от Client: " + serverMsg);
-                if (serverMsg.equals("out")) {
-                    clientOnline = false;
+            String serverMsg = in.readLine();
+            if (serverMsg.equals("out")) {
+                System.out.println("Сервер отсоединился");
+                serverOnline = false;
+                stopClient();
+                break;
+            }
+            System.out.println("Сообщение от Server: " + serverMsg);
+        }
+        stopClient();
+    }
+
+    private static void startConsoleListener() {
+        try {
+            reader = new BufferedReader(new InputStreamReader(System.in));
+            out = new BufferedWriter((new OutputStreamWriter(clientSocket.getOutputStream())));
+            System.out.println("Есть подключение к серверу");
+            while (clientOnline) {
+                String word = reader.readLine();
+                out.write(word + "\n");
+                out.flush();
+
+                if (word.equals("out")) {
+                    stopClient();
                     break;
                 }
             }
-            System.out.println("Client отсоединился");
         } catch (Exception e) {
             stopClient();
-            e.printStackTrace();
         }
     }
 
     private static void stopClient() {
+        if (!clientOnline) {
+            return;
+        }
         try {
             System.out.println("Клиент закрыт...");
             clientOnline = false;
             clientSocket.close();
             in.close();
             out.close();
+            System.exit(0);
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-
-    private static void oldClient() {
-        try {
-            try {
-                clientSocket = new Socket("localhost", 4004);
-                reader = new BufferedReader(new InputStreamReader(System.in));
-                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                out = new BufferedWriter((new OutputStreamWriter(clientSocket.getOutputStream())));
-                clientOnline = true;
-                while (clientOnline) {
-                    System.out.println("Напишите то что хотели сказать!");
-                    String word = reader.readLine();
-                    out.write(word + "\n");
-                    out.flush();
-
-                    String serverWord = in.readLine();
-                    System.out.println("Сообщение от Server: " + serverWord);
-
-                    if (word.equals("out")) {
-                        clientOnline = false;
-                        break;
-                    }
-                }
-            } finally {
-                System.out.println("Клиент закрыт...");
-                clientOnline = false;
-                clientSocket.close();
-                in.close();
-                out.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            System.exit(0);
         }
     }
 }

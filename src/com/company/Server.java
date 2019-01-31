@@ -32,10 +32,8 @@ public class Server {
 
     public static void main(String[] args) {
         startServer();
-        while (serverOnline) {
-            startSessionWithClient();
-            waitClient();
-        }
+        startSessionWithClient();
+        stopServer();
     }
 
     private static void startServer() {
@@ -46,20 +44,24 @@ public class Server {
             waitClient();
         } catch (Exception e) {
             stopServer();
-            System.err.println(e);
         }
     }
 
     private static void stopServer() {
+        if (!serverOnline) {
+            return;
+        }
         try {
             clientSocket.close();
             out.close();
             in.close();
+            server.close();
             serverOnline = false;
             System.out.println("Сервер закрыт!");
-            server.close();
+            System.exit(0);
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
+            System.exit(0);
         }
     }
 
@@ -69,7 +71,6 @@ public class Server {
             clientSocket = server.accept();
         } catch (Exception e) {
             stopServer();
-            System.err.println(e);
         }
     }
 
@@ -95,13 +96,12 @@ public class Server {
             System.out.println("Client отсоединился");
         } catch (Exception e) {
             stopServer();
-            e.printStackTrace();
         }
     }
 
     private static void startConsoleListener() {
         try {
-            while (clientOnline&&serverOnline) {
+            while (clientOnline) {
                 reader = new BufferedReader(new InputStreamReader(System.in));
                 out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
                 String serverMsg = reader.readLine();
@@ -114,52 +114,6 @@ public class Server {
             }
         } catch (Exception e) {
             stopServer();
-            e.printStackTrace();
-        }
-    }
-
-
-    private static void oldServer() {
-        try {
-            try {
-                server = new ServerSocket(4004);
-                System.out.println("Сервер запущен");
-                System.out.println("Жду соединение");
-                clientSocket = server.accept();
-                clientOnline = true;
-                System.out.println("Есть соединение");
-                try {
-                    while (clientOnline) {
-                        reader = new BufferedReader(new InputStreamReader(System.in));
-                        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                        out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-
-                        String word = in.readLine();
-                        System.out.println("Сообщение от Client: " + word);
-
-                        out.write("Привет это сервер! Потвержаю что получил информацию. И ты написал :" + word + "\n");
-                        out.flush();
-
-                        if (word.equals("out")) {
-                            clientOnline = false;
-                            break;
-                        }
-                    }
-                } finally {
-                    in.close();
-                    out.close();
-                }
-                System.out.println("while in");
-            } finally {
-                clientSocket.close();
-                in.close();
-                out.close();
-                serverOnline = false;
-                System.out.println("Сервер закрыт!");
-                server.close();
-            }
-        } catch (Exception e) {
-            System.err.println(e);
         }
     }
 }
