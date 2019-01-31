@@ -80,11 +80,11 @@ public class Client {
             return;
         }
         try {
-            System.out.println("Клиент закрыт...");
-            clientOnline = false;
-            clientSocket.close();
             in.close();
             out.close();
+            clientSocket.close();
+            clientOnline = false;
+            System.out.println("Клиент закрыт...");
             System.exit(0);
         } catch (Exception e) {
             e.printStackTrace();

@@ -31,20 +31,20 @@ public class Server {
     private static boolean serverOnline = false;
 
     public static void main(String[] args) {
-        startServer();
-        startSessionWithClient();
-        stopServer();
-    }
-
-    private static void startServer() {
         try {
-            server = new ServerSocket(4004);
-            System.out.println("Сервер запущен");
-            serverOnline = true;
-            waitClient();
+            startServer();
+            startSessionWithClient();
+            stopServer();
         } catch (Exception e) {
             stopServer();
         }
+    }
+
+    private static void startServer() throws IOException {
+        server = new ServerSocket(4004);
+        System.out.println("Сервер запущен");
+        serverOnline = true;
+        waitClient();
     }
 
     private static void stopServer() {
@@ -57,7 +57,7 @@ public class Server {
             in.close();
             server.close();
             serverOnline = false;
-            System.out.println("Сервер закрыт!");
+            System.out.println("Сервер закрыт...");
             System.exit(0);
         } catch (Exception e) {
             e.printStackTrace();
@@ -65,38 +65,31 @@ public class Server {
         }
     }
 
-    private static void waitClient() {
-        try {
-            System.out.println("Жду соединение");
-            clientSocket = server.accept();
-        } catch (Exception e) {
-            stopServer();
-        }
+    private static void waitClient() throws IOException {
+        System.out.println("Жду соединение");
+        clientSocket = server.accept();
     }
 
-    private static void startSessionWithClient() {
+    private static void startSessionWithClient() throws IOException {
         clientOnline = true;
         System.out.println("Есть соединение c Client");
         new Thread(() -> startConsoleListener()).start();
         startClientListener();
     }
 
-    private static void startClientListener() {
-        try {
-            while (clientOnline) {
-                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    private static void startClientListener() throws IOException {
+        while (clientOnline) {
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-                String clientMsg = in.readLine();
-                System.out.println("Сообщение от Client: " + clientMsg);
-                if (clientMsg.equals("out")) {
-                    clientOnline = false;
-                    break;
-                }
+            String clientMsg = in.readLine();
+            System.out.println("Сообщение от Client: " + clientMsg);
+            if (clientMsg.equals("out")) {
+                clientOnline = false;
+                break;
             }
-            System.out.println("Client отсоединился");
-        } catch (Exception e) {
-            stopServer();
         }
+        System.out.println("Client отсоединился");
+
     }
 
     private static void startConsoleListener() {
