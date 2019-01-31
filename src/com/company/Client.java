@@ -45,9 +45,6 @@ public class Client {
                     out.write(word + "\n");
                     out.flush();
 
-                    String serverWord = in.readLine();
-                    System.out.println("Сообщение от Server: " + serverWord);
-
                     if (word.equals("out")) {
                         clientOnline = false;
                         break;
@@ -66,5 +63,39 @@ public class Client {
 
     }
 
-    //private static void
+
+
+    private static void oldClient() {
+        try {
+            try {
+                clientSocket = new Socket("localhost", 4004);
+                reader = new BufferedReader(new InputStreamReader(System.in));
+                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                out = new BufferedWriter((new OutputStreamWriter(clientSocket.getOutputStream())));
+                clientOnline = true;
+                while (clientOnline) {
+                    System.out.println("Напишите то что хотели сказать!");
+                    String word = reader.readLine();
+                    out.write(word + "\n");
+                    out.flush();
+
+                    String serverWord = in.readLine();
+                    System.out.println("Сообщение от Server: " + serverWord);
+
+                    if (word.equals("out")) {
+                        clientOnline = false;
+                        break;
+                    }
+                }
+            } finally {
+                System.out.println("Клиент закрыт...");
+                clientOnline = false;
+                clientSocket.close();
+                in.close();
+                out.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

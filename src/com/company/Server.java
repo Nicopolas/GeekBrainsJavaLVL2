@@ -23,7 +23,7 @@ import java.net.Socket;
 
 public class Server {
     private static ServerSocket server;
-    private static Socket clentSocket;
+    private static Socket clientSocket;
     private static BufferedReader reader;
     private static BufferedReader in;
     private static BufferedWriter out;
@@ -52,7 +52,9 @@ public class Server {
 
     private static void stopServer() {
         try {
-            clentSocket.close();
+            clientSocket.close();
+            out.close();
+            in.close();
             serverOnline = false;
             System.out.println("Сервер закрыт!");
             server.close();
@@ -64,7 +66,7 @@ public class Server {
     private static void waitClient() {
         try {
             System.out.println("Жду соединение");
-            clentSocket = server.accept();
+            clientSocket = server.accept();
         } catch (Exception e) {
             stopServer();
             System.err.println(e);
@@ -79,48 +81,37 @@ public class Server {
 
     private static void startClientListener() {
         try {
-
             while (clientOnline) {
-                in = new BufferedReader(new InputStreamReader(clentSocket.getInputStream()));
-                out = new BufferedWriter(new OutputStreamWriter(clentSocket.getOutputStream()));
-                reader = new BufferedReader(new InputStreamReader(System.in));
+                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
                 String clientMsg = in.readLine();
                 System.out.println("Сообщение от Client: " + clientMsg);
-
-                String serverMsg = reader.readLine();
-                out.write(serverMsg + "\n");
-                out.flush();
-
-                if (serverMsg.equals("out")) {
+                if (clientMsg.equals("out")) {
                     clientOnline = false;
                     break;
                 }
             }
-
             System.out.println("Client отсоединился");
-            in.close();
-            out.close();
         } catch (Exception e) {
             stopServer();
-            System.err.println(e);
+            e.printStackTrace();
         }
     }
 
     private static void startConsoleListener() {
         try {
             reader = new BufferedReader(new InputStreamReader(System.in));
-            out = new BufferedWriter(new OutputStreamWriter(clentSocket.getOutputStream()));
-            String word = reader.readLine();
-            out.write(word + "\n");
+            out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+            String serverMsg = reader.readLine();
+            out.write(serverMsg + "\n");
             out.flush();
 
-            if (word.equals("out")) {
+            if (serverMsg.equals("out")) {
                 stopServer();
             }
         } catch (Exception e) {
             stopServer();
-            System.err.println(e);
+            e.printStackTrace();
         }
     }
 
@@ -131,14 +122,14 @@ public class Server {
                 server = new ServerSocket(4004);
                 System.out.println("Сервер запущен");
                 System.out.println("Жду соединение");
-                clentSocket = server.accept();
+                clientSocket = server.accept();
                 clientOnline = true;
                 System.out.println("Есть соединение");
                 try {
                     while (clientOnline) {
                         reader = new BufferedReader(new InputStreamReader(System.in));
-                        in = new BufferedReader(new InputStreamReader(clentSocket.getInputStream()));
-                        out = new BufferedWriter(new OutputStreamWriter(clentSocket.getOutputStream()));
+                        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                        out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 
                         String word = in.readLine();
                         System.out.println("Сообщение от Client: " + word);
@@ -157,7 +148,7 @@ public class Server {
                 }
                 System.out.println("while in");
             } finally {
-                clentSocket.close();
+                clientSocket.close();
                 in.close();
                 out.close();
                 serverOnline = false;
