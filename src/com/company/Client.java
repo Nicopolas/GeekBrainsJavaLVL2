@@ -36,11 +36,11 @@ public class Client {
             try {
                 clientSocket = new Socket("localhost", 4004);
                 reader = new BufferedReader(new InputStreamReader(System.in));
-                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 out = new BufferedWriter((new OutputStreamWriter(clientSocket.getOutputStream())));
                 clientOnline = true;
+                new Thread(() ->startServerListener()).start();
                 while (clientOnline) {
-                    System.out.println("Напишите то что хотели сказать!");
+                    System.out.println("Напишите то что хотели сказать!");//потом убрать
                     String word = reader.readLine();
                     out.write(word + "\n");
                     out.flush();
@@ -63,6 +63,36 @@ public class Client {
 
     }
 
+    private static void startServerListener() {
+        try {
+            while (clientOnline) {
+                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+                String serverMsg = in.readLine();
+                System.out.println("Сообщение от Client: " + serverMsg);
+                if (serverMsg.equals("out")) {
+                    clientOnline = false;
+                    break;
+                }
+            }
+            System.out.println("Client отсоединился");
+        } catch (Exception e) {
+            stopClient();
+            e.printStackTrace();
+        }
+    }
+
+    private static void stopClient() {
+        try {
+            System.out.println("Клиент закрыт...");
+            clientOnline = false;
+            clientSocket.close();
+            in.close();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 
     private static void oldClient() {

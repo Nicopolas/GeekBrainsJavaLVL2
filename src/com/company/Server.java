@@ -76,6 +76,7 @@ public class Server {
     private static void startSessionWithClient() {
         clientOnline = true;
         System.out.println("Есть соединение c Client");
+        new Thread(() -> startConsoleListener()).start();
         startClientListener();
     }
 
@@ -100,14 +101,16 @@ public class Server {
 
     private static void startConsoleListener() {
         try {
-            reader = new BufferedReader(new InputStreamReader(System.in));
-            out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-            String serverMsg = reader.readLine();
-            out.write(serverMsg + "\n");
-            out.flush();
+            while (clientOnline&&serverOnline) {
+                reader = new BufferedReader(new InputStreamReader(System.in));
+                out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+                String serverMsg = reader.readLine();
+                out.write(serverMsg + "\n");
+                out.flush();
 
-            if (serverMsg.equals("out")) {
-                stopServer();
+                if (serverMsg.equals("out")) {
+                    stopServer();
+                }
             }
         } catch (Exception e) {
             stopServer();
