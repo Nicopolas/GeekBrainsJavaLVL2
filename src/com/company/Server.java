@@ -1,9 +1,6 @@
 package com.company;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -27,12 +24,108 @@ import java.net.Socket;
 public class Server {
     private static ServerSocket server;
     private static Socket clentSocket;
+    private static BufferedReader reader;
     private static BufferedReader in;
     private static BufferedWriter out;
     private static boolean clientOnline = false;
     private static boolean serverOnline = false;
 
     public static void main(String[] args) {
+        startServer();
+        while (serverOnline) {
+            startSessionWithClient();
+            waitClient();
+        }
+    }
+
+    private static void startServer() {
+        try {
+            server = new ServerSocket(4004);
+            System.out.println("Сервер запущен");
+            serverOnline = true;
+            waitClient();
+        } catch (Exception e) {
+            stopServer();
+            System.err.println(e);
+        }
+    }
+
+    private static void stopServer() {
+        try {
+            clentSocket.close();
+            serverOnline = false;
+            System.out.println("Сервер закрыт!");
+            server.close();
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+    }
+
+    private static void waitClient() {
+        try {
+            System.out.println("Жду соединение");
+            clentSocket = server.accept();
+        } catch (Exception e) {
+            stopServer();
+            System.err.println(e);
+        }
+    }
+
+    private static void startSessionWithClient() {
+        clientOnline = true;
+        System.out.println("Есть соединение c Client");
+        startClientListener();
+    }
+
+    private static void startClientListener() {
+        try {
+
+            while (clientOnline) {
+                in = new BufferedReader(new InputStreamReader(clentSocket.getInputStream()));
+                out = new BufferedWriter(new OutputStreamWriter(clentSocket.getOutputStream()));
+                reader = new BufferedReader(new InputStreamReader(System.in));
+
+                String clientMsg = in.readLine();
+                System.out.println("Сообщение от Client: " + clientMsg);
+
+                String serverMsg = reader.readLine();
+                out.write(serverMsg + "\n");
+                out.flush();
+
+                if (serverMsg.equals("out")) {
+                    clientOnline = false;
+                    break;
+                }
+            }
+
+            System.out.println("Client отсоединился");
+            in.close();
+            out.close();
+        } catch (Exception e) {
+            stopServer();
+            System.err.println(e);
+        }
+    }
+
+    private static void startConsoleListener() {
+        try {
+            reader = new BufferedReader(new InputStreamReader(System.in));
+            out = new BufferedWriter(new OutputStreamWriter(clentSocket.getOutputStream()));
+            String word = reader.readLine();
+            out.write(word + "\n");
+            out.flush();
+
+            if (word.equals("out")) {
+                stopServer();
+            }
+        } catch (Exception e) {
+            stopServer();
+            System.err.println(e);
+        }
+    }
+
+
+    private static void oldServer() {
         try {
             try {
                 server = new ServerSocket(4004);
@@ -43,11 +136,12 @@ public class Server {
                 System.out.println("Есть соединение");
                 try {
                     while (clientOnline) {
+                        reader = new BufferedReader(new InputStreamReader(System.in));
                         in = new BufferedReader(new InputStreamReader(clentSocket.getInputStream()));
                         out = new BufferedWriter(new OutputStreamWriter(clentSocket.getOutputStream()));
 
                         String word = in.readLine();
-                        System.out.println(word);
+                        System.out.println("Сообщение от Client: " + word);
 
                         out.write("Привет это сервер! Потвержаю что получил информацию. И ты написал :" + word + "\n");
                         out.flush();

@@ -42,11 +42,11 @@ public class Client {
                 while (clientOnline) {
                     System.out.println("Напишите то что хотели сказать!");
                     String word = reader.readLine();
-                    out.write(word+ "\n");
+                    out.write(word + "\n");
                     out.flush();
 
                     String serverWord = in.readLine();
-                    System.out.println(serverWord);
+                    System.out.println("Сообщение от Server: " + serverWord);
 
                     if (word.equals("out")) {
                         clientOnline = false;
@@ -65,4 +65,6 @@ public class Client {
         }
 
     }
+
+    //private static void
 }
