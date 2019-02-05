@@ -1,24 +1,12 @@
-package com.company;
+package com.company.client;
 
 import java.io.*;
 import java.net.Socket;
 
-/*1. Написать консольный вариант клиент\серверного приложения,
-в котором пользователь может писать сообщения, как на клиентской стороне,
-так и на серверной.
-Т.е. если на клиентской стороне написать "Привет",
-нажать Enter то сообщение должно передаться на сервер и там отпечататься в консоли.
-Если сделать то же самое на серверной стороне, сообщение соответственно передается клиенту
-и печатается у него в консоли.
-Есть одна особенность, которую нужно учитывать:
-клиент или сервер может написать несколько сообщений подряд,
-такую ситуацию необходимо корректно обработать
-
-Разобраться с кодом с занятия, он является фундаментом проекта-чата
-
-ВАЖНО! Сервер общается только с одним клиентом,
-т.е. не нужно запускать цикл, который будет ожидать второго/третьего/n-го клиентов
-*/
+/*
+ *Реализовать личные сообщения, если клиент пишет «/w nick3 Привет»,
+ * то только клиенту с ником nick3 должно прийти сообщение «Привет».
+ */
 
 public class Client {
     private static Socket clientSocket;
@@ -27,8 +15,16 @@ public class Client {
     private static BufferedWriter out;
     private static boolean clientOnline = false;
     private static boolean serverOnline = false;
+    private String name;
+    private String password;
 
-    public static void main(String[] args) {
+    public Client(String name, String password) {
+        this.name = name;
+        this.password = password;
+        startClient();
+    }
+
+    private void startClient() {
         try {
             clientSocket = new Socket("localhost", 4004);
             clientOnline = true;
