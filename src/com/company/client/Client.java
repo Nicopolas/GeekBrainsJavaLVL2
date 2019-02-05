@@ -12,21 +12,22 @@ public class Client {
     private static Socket clientSocket;
     private static BufferedReader reader; //console!
     private static BufferedReader in;
-    private static BufferedWriter out;
+    private static BufferedWriter out ;
     private static boolean clientOnline = false;
     private static boolean serverOnline = false;
-    private String name;
-    private String password;
+    private static String name;
 
-    public Client(String name, String password) {
+    public Client(String name) {
         this.name = name;
-        this.password = password;
         startClient();
     }
 
     private void startClient() {
         try {
             clientSocket = new Socket("localhost", 4004);
+            reader = new BufferedReader(new InputStreamReader(System.in));
+            out = new BufferedWriter((new OutputStreamWriter(clientSocket.getOutputStream())));
+            onAuth();
             clientOnline = true;
             new Thread(() -> startConsoleListener()).start();
             startServerListener();
@@ -53,15 +54,13 @@ public class Client {
 
     private static void startConsoleListener() {
         try {
-            reader = new BufferedReader(new InputStreamReader(System.in));
-            out = new BufferedWriter((new OutputStreamWriter(clientSocket.getOutputStream())));
             System.out.println("Есть подключение к серверу");
             while (clientOnline) {
                 String word = reader.readLine();
                 out.write(word + "\n");
                 out.flush();
 
-                if (word.equals("out")) {
+                if (word.equals("/end")) {
                     stopClient();
                     break;
                 }
@@ -85,6 +84,16 @@ public class Client {
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(0);
+        }
+    }
+
+    public static void onAuth() {
+        try {
+            out.write("/auth " + name);
+            out.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            stopClient();
         }
     }
 }

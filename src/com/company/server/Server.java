@@ -45,6 +45,10 @@ public class Server {
         clients.forEach(clientHandler -> clientHandler.sendMessage(msgText));
     }
 
+    public void sendMsgTo(String clientName, String msgText) {
+        clients.forEach(clientHandler -> clientHandler.sendMessage(msgText));
+    }
+
     public void removeClient(ClientHandler clientHandler) {
         clients.remove(clientHandler);
     }

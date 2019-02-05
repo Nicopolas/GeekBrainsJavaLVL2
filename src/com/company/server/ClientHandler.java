@@ -3,7 +3,7 @@ package com.company.server;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * @author ilnaz-92@yandex.ru
@@ -17,10 +17,13 @@ public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private Server server;
     private static int clientsCount = 0;
+    private static String name;
     private static String KEY_OF_SESSION_END = "session end";
-
-    private static String NEW_CLIENTS_MSG = "Новый участник! Теперь нас = ";
+    private static String NEW_CLIENTS_MSG = "Новый участник %s! Теперь нас = %s";
     private static String EXIT_CLIENT_MSG = "Участник вышел! Теперь нас = ";
+    private static String AUTH_ERROR_MSG = "Ошибка аутентификации неверный формат запроса!";
+    private static String AUTH_REGEXP = "/auth (/w+)";
+    private static String PRIVATE_MSG_REGEXP = "/w (\\w+)(\\s)(\\w+)";
 
     public ClientHandler(Socket clientSocket, Server server) {
 
@@ -38,16 +41,24 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-
-            server.sendMsgToAllClients(NEW_CLIENTS_MSG + clientsCount);
-
+            String clientsMsg = inMessage.nextLine();
+            if (clientsMsg.matches(AUTH_REGEXP)) {
+                System.out.println(AUTH_ERROR_MSG);
+                exitClientSession();
+            }
+            name = getName(clientsMsg);
+            server.sendMsgToAllClients(String.format(NEW_CLIENTS_MSG, name, clientsCount));
             while (true) {
                 if (inMessage.hasNext()) {
-                    String clientsMsg = inMessage.nextLine();
+                    clientsMsg = inMessage.nextLine();
                     System.out.println(clientsMsg);
 
                     if (clientsMsg.equalsIgnoreCase(KEY_OF_SESSION_END)) {
                         break;
+                    }
+
+                    if (clientsMsg.matches(PRIVATE_MSG_REGEXP)) {
+                        server.sendMsgTo(getName(clientsMsg), clientsMsg);
                     }
 
                     server.sendMsgToAllClients(clientsMsg);
@@ -61,6 +72,10 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private String getName(String authMessage) {
+        return authMessage.split(" ")[1];
+    }
+
     public void sendMessage(String msgText) {
         outMessage.println(msgText);
         outMessage.flush();
@@ -71,6 +86,4 @@ public class ClientHandler implements Runnable {
         clientsCount--;
         server.sendMsgToAllClients(EXIT_CLIENT_MSG + clientsCount);
     }
-
-
 }
