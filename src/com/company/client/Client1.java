@@ -3,7 +3,7 @@ package com.company.client;
 import java.io.*;
 import java.net.Socket;
 
-public class Client {
+public class Client1 {
     private static Socket clientSocket;
     private static BufferedReader reader; //console!
     private static BufferedReader in;
@@ -15,10 +15,11 @@ public class Client {
     private static String AUTH_SUCCESSFUL = "/authOn";
 
     public static void main(String[] args) {
-        new Client("Vanja");
+        new Client1("Sereja");
     }
 
-    public Client(String name) {
+
+    public Client1(String name) {
         this.name = name;
         startClient();
     }

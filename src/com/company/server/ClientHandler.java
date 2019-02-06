@@ -16,14 +16,16 @@ public class ClientHandler implements Runnable {
     private static final String HOST = "localhost";
     private Socket clientSocket;
     private Server server;
+    private String name;
     private static int clientsCount = 0;
-    private static String name;
     private static String KEY_OF_SESSION_END = "session end";
     private static String NEW_CLIENTS_MSG = "Новый участник %s! Теперь нас = %s";
     private static String EXIT_CLIENT_MSG = "Участник вышел! Теперь нас = ";
     private static String AUTH_ERROR_MSG = "Ошибка аутентификации неверный формат запроса!";
-    private static String AUTH_REGEXP = "/auth (/w+)";
-    private static String PRIVATE_MSG_REGEXP = "/w (\\w+)(\\s)(\\w+)";
+    private static String SEND_MSG_ERROR = "Ошибка отправки сообщения не найден пользователь!";
+    private static String AUTH_REGEXP = "/auth(\\s)(\\w+)";
+    private static String PRIVATE_MSG_REGEXP = "^/w (\\w+)(\\s)(.+)";
+    private static String AUTH_SUCCESSFUL = "/authOn";
 
     public ClientHandler(Socket clientSocket, Server server) {
 
@@ -42,11 +44,12 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             String clientsMsg = inMessage.nextLine();
-            if (clientsMsg.matches(AUTH_REGEXP)) {
+            if (!clientsMsg.matches(AUTH_REGEXP)) {
                 System.out.println(AUTH_ERROR_MSG);
                 exitClientSession();
             }
-            name = getName(clientsMsg);
+            name = parseName(clientsMsg);
+            server.sendMsgTo(name, AUTH_SUCCESSFUL);
             server.sendMsgToAllClients(String.format(NEW_CLIENTS_MSG, name, clientsCount));
             while (true) {
                 if (inMessage.hasNext()) {
@@ -58,7 +61,10 @@ public class ClientHandler implements Runnable {
                     }
 
                     if (clientsMsg.matches(PRIVATE_MSG_REGEXP)) {
-                        server.sendMsgTo(getName(clientsMsg), clientsMsg);
+                        if (!server.sendPrivateMsgTo(name, clientsMsg)) {
+                            server.sendMsgTo(name, SEND_MSG_ERROR);
+                        }
+                        continue;
                     }
 
                     server.sendMsgToAllClients(clientsMsg);
@@ -72,12 +78,21 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private String getName(String authMessage) {
+    public String getName() {
+        return name;
+    }
+
+    private String parseName(String authMessage) {
         return authMessage.split(" ")[1];
     }
 
     public void sendMessage(String msgText) {
         outMessage.println(msgText);
+        outMessage.flush();
+    }
+
+    public void sendMessage(String name, String msgText) {
+        outMessage.println("From: " + name + " " + msgText);
         outMessage.flush();
     }
 
